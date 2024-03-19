@@ -1,0 +1,9 @@
+
+source_table .....
+
+main souce_id ...1 and missed=1, and hidden =0 
+
+sco =source_id...2 and missed=1, and hidden =0
+
+asile source_id=3 and trigger=1 and hidden =0
+aisle source_id=3 and intervantion =1, and trigger=1 and hidden =0
