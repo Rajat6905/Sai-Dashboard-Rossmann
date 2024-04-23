@@ -52,9 +52,17 @@ def update_transactions_table(db2, db, sco, transaction_item_sco, transaction_id
                 cardno=sco.cardno)
     transaction = Transactions(**data)
     db.add(transaction)
+    if counter_type == 2:
 
-    transaction_items = db2.query(Transaction_Details_SCO).filter(
-        Transaction_Details_SCO.TransactionID == transaction_id).all()
+        transaction_items = db2.query(Transaction_Details_SCO).filter(
+            Transaction_Details_SCO.TransactionID == transaction_id).all()
+
+    elif counter_type==1:
+        transaction_items = db2.query(Transaction_Details_Main).filter(
+            Transaction_Details_Main.TransactionID == transaction_id).all()
+
+
+
     # print(transaction_items)
     transaction_items_data = [{"name":val.Name,
                                "transaction_id":val.TransactionID,
@@ -141,7 +149,7 @@ def upload_transaction(db2: Session, db:Session, transaction_id, counter_type):
         return data
     elif counter_type == 1:
         # print("main")
-        main = db2.query(Transaction_Main).filter(Transaction_Main.transactionId == transaction_id).f()
+        main = db2.query(Transaction_Main).filter(Transaction_Main.transactionId == transaction_id).first()
         if main:
             beginDate = main.beginDate
             count = main.totalNumberOfItems
@@ -150,8 +158,7 @@ def upload_transaction(db2: Session, db:Session, transaction_id, counter_type):
             move_data_in_s3(beginDate, store_actual_id[0], count, video_name)
 
         transaction_item_sco = db2.query(Transaction_Details_Main).filter(
-            Transaction_Details_SCO.TransactionID == transaction_id).first()
-
+            Transaction_Details_Main.TransactionID == transaction_id).first()
 
         data = update_transactions_table(db2, db, main, transaction_item_sco, transaction_id, counter_type)
         return data
