@@ -354,13 +354,16 @@ def get_ailse_transaction_data_by_id(details, db):
         payload = json.dumps({
             "id": result["aisle_theft_id"],
             "type": result["aisle_theft_type"],
-            "user_company": "Coop",
+            "user_company": "Rossmann",
         })
         headers = {
             'Content-Type': 'application/json'
         }
         response = requests.request("POST", BASE_URL + url_ext, headers=headers, data=payload, verify=False)
-        return response.json()
+        res = response.json()
+        res["data"]["image"] = res["data"]["image"].replace("WIWO", "WIWO-transfer") if res["data"]["image"] else ""
+        res["data"]["video"] = res["data"]["video"].replace("WIWO", "WIWO-transfer") if res["data"]["video"] else ""
+        return res
 
     return {"message": "No Data Found"}
 

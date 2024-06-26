@@ -2,12 +2,14 @@ version: '3'
 services:
   web:
     container_name: sai-dashboard-rossmann
-    image: sai-dashboard-rossmann-api:v2
+    image: sai-dashboard-rossmann-api:v3
     build: .
     ports:
       - "8000:80"
     depends_on:
       - mysql
+    volumes:
+      - .:/app
   mysql:
     image: mysql:latest
     environment:

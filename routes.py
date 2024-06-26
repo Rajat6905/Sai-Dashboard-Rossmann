@@ -87,7 +87,7 @@ from crud.register_user import (create_user,
 from crud.for_xml_table_operations import upload_transaction, update_transaction_and_items
 
 import boto3
-import config
+# import config
 from starlette.responses import StreamingResponse
 
 auth_handler = AuthHandler()
