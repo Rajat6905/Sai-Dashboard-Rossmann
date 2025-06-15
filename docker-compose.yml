@@ -2,19 +2,9 @@ version: '3'
 services:
   web:
     container_name: sai-dashboard-rossmann
-    image: sai-dashboard-rossmann-api:v3
+    image: rossmann-dashboard-api:v1
     build: .
     ports:
-      - "8000:80"
-    depends_on:
-      - mysql
+      - "8000:443"
     volumes:
       - .:/app
-  mysql:
-    image: mysql:latest
-    environment:
-      MYSQL_HOST: centraldb.mysql.database.azure.com
-      MYSQL_DATABASE: sai_rossmann
-      MYSQL_USER: userdb
-      MYSQL_PASSWORD: Saigroup@987
-      MYSQL_PORT: 3306

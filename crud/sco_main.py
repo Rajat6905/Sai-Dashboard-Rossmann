@@ -69,7 +69,7 @@ def get_count_sco_main(db: Session, store_id, region_id, area_id, start_time, en
         .first()
 
     return {"main_count": int(main_count.main_count), "main_total": int(main_price.main_total), "sco_count": int(sco_count.sco_count),
-            "sco_total": int(sco_price.sco_total)}
+            "sco_total": int(sco_price.sco_total), "item_count": int((sco_price.sco_total)//2.5)}
 
 
 def get_main_count_data(db: Session, store_id, region_id, area_id, type, start_time, end_time, page, seen_status):

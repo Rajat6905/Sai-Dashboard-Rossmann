@@ -93,6 +93,11 @@ from starlette.responses import StreamingResponse
 auth_handler = AuthHandler()
 
 
+@router.get("/health_check", status_code=status.HTTP_200_OK)
+def health_check():
+    return {"message": "ok"}
+
+
 @router.get("/get_count_sco_main", status_code=status.HTTP_200_OK)  # Authorization Done
 def get_count_sco_main_(db: Session = Depends(get_db), store_id: int = None, region: int = None, area: int = None,
                         start_time: str = None, end_time: str = None, token_data=Depends(auth_handler.auth_wrapper)):
