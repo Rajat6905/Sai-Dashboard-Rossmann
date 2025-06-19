@@ -75,12 +75,11 @@ from crud.aisle_images import get_aisle_images
 from crud.machine_issue import add_data, get_data, get_all_data
 
 from utils import set_permissions
-from schemas import AuthDetails
 
 auth_handler = AuthHandler()
 
 from crud.login import AuthHandler, user_validate
-from schemas import AuthDetails
+from schemas import AuthDetails,PresignedUrlRequest
 from crud.register_user import (create_user,
                                 get_data_acc_to_stores, all_users)
 
@@ -89,6 +88,7 @@ from crud.for_xml_table_operations import upload_transaction, update_transaction
 import boto3
 # import config
 from starlette.responses import StreamingResponse
+from s3_utils import create_presigned_url
 
 auth_handler = AuthHandler()
 
@@ -804,3 +804,16 @@ def update_transaction_and_items_(details:dict, transaction_id:str, db: Session 
 @router.get("/delete_item", status_code=status.HTTP_200_OK)
 def delete_item_(db:Session=Depends(get_db), db_id:int=None):
     return delete_item(db, db_id)
+
+@router.post("/presigned-url")
+def get_presigned_url(body: PresignedUrlRequest, token_data=Depends(auth_handler.auth_wrapper)):
+    body = body.dict()
+    object_name = body.get("object_name")
+    expires_in = body.get("expires_in")
+
+    res = create_presigned_url(object_name,expires_in)
+
+    if not res:
+        raise HTTPException(status_code=500, detail="Error generating presigned URL")
+
+    return {"presigned_url": res}
