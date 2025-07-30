@@ -2,9 +2,11 @@ version: '3'
 services:
   web:
     container_name: sai-dashboard-rossmann
-    image: rossmann-dashboard-api:v1
-    build: .
+    image: rossmann-dashboard-api:v3
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "8000:443"
+      - "8000:80"
     volumes:
       - .:/app
