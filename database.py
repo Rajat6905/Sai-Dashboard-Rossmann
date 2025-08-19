@@ -2,8 +2,8 @@ from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = 'mysql+mysqlconnector://userdb:Saigroup%40987@centraldb.mysql.database.azure.com:3306/sai_rossmann'
-SQLALCHEMY_DATABASE_URL2 = 'mysql+mysqlconnector://userdb:Saigroup%40987@centraldb.mysql.database.azure.com:3306/xmldata_rossmann'
+SQLALCHEMY_DATABASE_URL = 'mysql+mysqlconnector://rossmann_dashboard_db_user:SnowFall9@centraldb.mysql.database.azure.com:3306/sai_rossmann'
+SQLALCHEMY_DATABASE_URL2 = 'mysql+mysqlconnector://rossmann_xmldata_dashboard:DogWalk44@centraldb.mysql.database.azure.com:3306/xmldata_rossmann'
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 print(engine)
