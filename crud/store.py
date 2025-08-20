@@ -57,3 +57,14 @@ def add_issue_comment(db, details):
             "message": "Internal server error",
             "status_code":500
         }
+    
+def fetch_searched_store(db):
+    query = db.query(
+        Stores.id, Stores.name
+    ).filter(
+        Stores.store_running == 1
+    )
+
+    result = query.order_by(Stores.name).all()
+
+    return result
