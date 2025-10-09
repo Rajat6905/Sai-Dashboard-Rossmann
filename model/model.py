@@ -86,3 +86,12 @@ class Transaction_Details_SCO(Base2):
 class Transaction_Details_Main(Base2):
     __table__ = Table("transaction_details", Base2.metadata,
                       autoload=True, autoload_with=engine2)
+
+class Transaction_SCO_Alert(Base2):
+    __table__ = Table("transactions_sco_alert", Base2.metadata,
+                      autoload=True, autoload_with=engine2)
+    
+
+class Stores_XML(Base2):
+    __table__ = Table("stores", Base2.metadata,
+                      autoload=True, autoload_with=engine2)

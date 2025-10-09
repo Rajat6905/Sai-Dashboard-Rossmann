@@ -92,6 +92,9 @@ import boto3
 # import config
 from starlette.responses import StreamingResponse
 from s3_utils import create_presigned_url
+from schemas import UploadTransactionSkipRequestModel, UploadTransactionDetailsRequestModel, UploadTransactionToDbRequestModel, UploadTransactionStatusDetailsRequestModel
+from crud.transactions import *
+from crud.store import fetch_searched_store
 
 auth_handler = AuthHandler()
 
@@ -858,3 +861,171 @@ def get_presigned_url(body: PresignedUrlRequest, token_data=Depends(auth_handler
         raise HTTPException(status_code=500, detail="Error generating presigned URL")
 
     return {"presigned_url": res}
+
+@router.get("/search-store", status_code=status.HTTP_200_OK)
+def get_search_store(
+    db: Session = Depends(get_db), 
+    token_data=Depends(auth_handler.auth_wrapper)
+):
+    result = fetch_searched_store(db)
+    return result
+
+@router.post("/upload-transaction-list", status_code=status.HTTP_200_OK)
+def upload_transaction_details(
+    body: UploadTransactionDetailsRequestModel,
+    db: Session = Depends(get_db2),
+    token_data=Depends(auth_handler.auth_wrapper)
+):
+    body = body.dict()
+    stores_id_list = body.get("store_ids", [])
+    start_time = body.get("start_time", None)
+    end_time = body.get("end_time", None)
+    nudge_type = body.get("nudge_type", "all")
+    transaction_id, item_details, missed_items_details, store_name, store_id = fetch_upload_transaction_details(
+        stores_id_list=stores_id_list, start_time=start_time, end_time=end_time, db_xml_dev=db,nudge_type=nudge_type
+    )
+
+    transaction_date = missed_items_details[0].beginDate if missed_items_details else None
+    sequence_number = item_details[0].sequence_no if item_details else None
+    till_number = item_details[0].counterno if item_details else None
+    nudge_count = len(missed_items_details) if missed_items_details else 0
+    
+    if not missed_items_details:
+        return {}
+    
+    if nudge_type == "not_attended":
+        video_url = f"Videos/{transaction_date[:10]}/{str(store_id)}/unzip/not_attended/{transaction_id}.mp4"
+    else:
+        video_url = f"Videos/{transaction_date[:10]}/{str(store_id)}/unzip/alerts/{transaction_id}.mp4"
+
+    items = []
+    for record in item_details:
+        items.append({
+            "item_name": record.Name,
+            "item_quantity": int(record.Quantity) if record.Quantity else 0,
+            "item_date": record.BeginDateTime.replace("T", " "),
+            "missed_items": False
+        })
+    
+    for record in missed_items_details:
+        items.append({
+            "item_name": "Item",
+            "item_quantity": 1,
+            "item_date": record.beginDate.replace("T", " "),
+            "missed_items": True
+        })
+
+    items = sorted(items, key=lambda x: x["item_date"])
+    transaction_date = items[0]["item_date"] if items else None
+
+    return {
+        "transaction_id": transaction_id,
+        "store_name": store_name,
+        "store_id": store_id,
+        "sequence_number": sequence_number,
+        "till_number": till_number,
+        "nudge_count": nudge_count,
+        "transaction_date": transaction_date,
+        "video_url": video_url,
+        "items": items
+    }
+
+
+@router.put("/upload-transaction-to-db", status_code=status.HTTP_200_OK)
+def upload_transaction_to_db(
+    body: UploadTransactionToDbRequestModel,
+    db: Session = Depends(get_db),
+    db_xml_dev_db: Session = Depends(get_db2),
+    token_data=Depends(auth_handler.auth_wrapper)
+):
+    body = body.dict()
+    transaction_id = body.get("transaction_id", None)
+    store_id = body.get("store_id", None)
+    description = body.get("description", None)
+    clubcard = body.get("clubcard", None)
+    nudge_type = body.get("nudge_type", "all")
+
+    try:
+        insert_transaction_to_dashboard_db(transaction_id, description, clubcard, store_id, db, db_xml_dev_db,nudge_type=nudge_type)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Error uploading transaction to dashboard: {str(e)}"
+        )
+
+    update_transaction_entry_status(transaction_id, db_xml_dev_db)
+
+    return {
+        "message": "Transaction uploaded to dashboard successfully"
+    }
+
+
+@router.post("/upload-transaction-skip", status_code=status.HTTP_200_OK)
+def upload_transaction_skip(
+    body: UploadTransactionSkipRequestModel,
+    db_xml_dev_db: Session = Depends(get_db2),
+    token_data=Depends(auth_handler.auth_wrapper)
+):
+    body = body.dict()
+    transaction_id = body.get("transaction_id", None)
+
+    try:
+        upload_transaction_skip_op(transaction_id, db_xml_dev_db)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error uploading transaction skip: {str(e)}")
+
+    return {"message": "Transaction skipped successfully"}
+
+
+@router.post("/upload-transaction-status-details", status_code=status.HTTP_200_OK)
+def upload_transaction_status_details(
+    body: UploadTransactionStatusDetailsRequestModel,
+    db: Session = Depends(get_db2),
+    token_data=Depends(auth_handler.auth_wrapper)
+):
+    body = body.dict()
+    store_ids = body.get("store_ids", [])
+    start_time = body.get("start_time", None)
+    end_time = body.get("end_time", None)
+    nudge_type = body.get("nudge_type", "all")
+
+    entry_status_result, skip_result = fetch_transaction_status_details(store_ids, start_time, end_time, db, nudge_type=nudge_type)
+
+    entry_status_dict = {record.id: record for record in entry_status_result}
+    skip_dict = {record.id: record for record in skip_result}
+
+    store_id_result = set(list(entry_status_dict.keys()) + list(skip_dict.keys()))
+
+    res = []
+    total_entry_status_count = 0
+    total_skip_count = 0
+    for store_id in store_id_result:
+        store_name = None
+        if store_id in entry_status_dict:
+            store_name = entry_status_dict.get(store_id).name
+        elif store_id in skip_dict:
+            store_name = skip_dict.get(store_id).name
+
+        entry_status_count = 0
+        if store_id in entry_status_dict:
+            entry_status_count = entry_status_dict.get(store_id).entry_status_count
+        
+        skip_count = 0
+        if store_id in skip_dict:
+            skip_count = skip_dict.get(store_id).skip_count
+
+        total_entry_status_count += entry_status_count
+        total_skip_count += skip_count
+
+        if store_name:
+            res.append({
+                "store_id": store_id,
+                "store_name": store_name,
+                "entry_status_count": entry_status_count,
+                "skip_count": skip_count
+            })
+
+    print("total_entry_status_count: ", total_entry_status_count)
+    print("total_skip_count: ", total_skip_count)
+
+    return {"data": res}
