@@ -128,7 +128,7 @@ def insert_transaction_to_dashboard_db(transaction_id, input_description, input_
         highlighted=0,
         video_link=f"{transaction_id}.mp4",
         begin_date=min([item.BeginDateTime for item in item_details]).replace("T", " "),
-        end_date=min([item.BeginDateTime for item in item_details]).replace("T", " "),
+        end_date=max([item.BeginDateTime for item in item_details]).replace("T", " "),
         final_status=0,
         staffcard=""
     )

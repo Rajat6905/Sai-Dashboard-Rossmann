@@ -2,7 +2,7 @@ version: '3'
 services:
   web:
     container_name: sai-dashboard-rossmann
-    image: rossmann-dashboard-api:v5
+    image: rossmann-dashboard-api:v6
     build:
       context: .
       dockerfile: Dockerfile
