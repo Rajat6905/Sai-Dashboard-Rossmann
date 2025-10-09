@@ -40,3 +40,4 @@ wsproto
 boto3
 cryptography
 pydantic-settings
+XlsxWriter==3.2.0

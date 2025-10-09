@@ -59,6 +59,14 @@ class Machine_issue(Base):
 class Machine_issue_details(Base):
     __table__ = Table("machine_issue_details", Base.metadata,
                       autoload=True, autoload_with=engine)
+    
+class Status(Base):
+    __table__ = Table("status", Base.metadata,
+                      autoload=True, autoload_with=engine)
+    
+class LatestStatus(Base):
+    __table__ = Table("latest_status", Base.metadata,
+                      autoload=True, autoload_with=engine)
 
 
 

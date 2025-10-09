@@ -1,7 +1,9 @@
 import base64
-
+import pandas as pd
+from io import BytesIO
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, FastAPI, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
 
 router = APIRouter()
 security = HTTPBearer()
@@ -65,6 +67,7 @@ from crud.store import (get_issue_category,
                         store_map_data,
                         add_issue_comment)
 
+from crud.status import fetch_camera_status_for_report, fetch_system_status_for_report, fetch_store_status_for_report
 from crud.csv_file_into_db import (issue_description_data_update)
 from crud.login import AuthHandler, user_validate
 from crud.register_user import (create_user,
@@ -804,6 +807,44 @@ def update_transaction_and_items_(details:dict, transaction_id:str, db: Session 
 @router.get("/delete_item", status_code=status.HTTP_200_OK)
 def delete_item_(db:Session=Depends(get_db), db_id:int=None):
     return delete_item(db, db_id)
+
+
+@router.get("/camera-status-report")
+def get_camera_status_report(store_id: int = None, region_id: int = None, area_id: int = None, page: int = 1,
+                             per_page: int = 10, token_data=Depends(auth_handler.auth_wrapper),
+                             db: Session = Depends(get_db)):
+    result, count = fetch_camera_status_for_report(db, store_id, region_id, area_id, page, per_page)
+    return {"data": result, "count": count}
+
+
+@router.get("/system-status-report")
+def get_system_status_report(store_id: int = None, region_id: int = None, area_id: int = None, page: int = 1,
+                             per_page: int = 10, token_data=Depends(auth_handler.auth_wrapper),
+                             db: Session = Depends(get_db)):
+    result, count = fetch_system_status_for_report(db, store_id, region_id, area_id, page, per_page)
+    return {"data": result, "count": count}
+
+
+@router.get("/store-status-report", status_code=status.HTTP_200_OK)
+def get_store_status_report(db: Session = Depends(get_db), token_data=Depends(auth_handler.auth_wrapper)):
+    data_camera, data_store = fetch_store_status_for_report(db)
+
+    df_camera = pd.DataFrame(data_camera, columns=["Store ID", "Store Name", "Camera Number", "Status",
+                                                   "Checked On", "Last Seen"])
+    df_store = pd.DataFrame(data_store, columns=["Store ID", "Store Name", "Status", "Checked On", "Last Seen"])
+
+    buffer = BytesIO()
+    with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+        df_camera.to_excel(writer, sheet_name="Cameras", index=False)
+        df_store.to_excel(writer, sheet_name="Stores", index=False)
+
+    buffer.seek(0)
+
+    return StreamingResponse(buffer, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                             headers={
+                                 "Content-Disposition": "attachment; filename=StoreCameraStatusReport.xlsx"
+                             })
+
 
 @router.post("/presigned-url")
 def get_presigned_url(body: PresignedUrlRequest, token_data=Depends(auth_handler.auth_wrapper)):
