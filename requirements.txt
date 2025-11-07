@@ -3,6 +3,7 @@ attrs
 certifi
 charset-normalizer
 click
+cachetools
 exceptiongroup
 fastapi
 greenlet

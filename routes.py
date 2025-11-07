@@ -91,7 +91,7 @@ from crud.for_xml_table_operations import upload_transaction, update_transaction
 import boto3
 # import config
 from starlette.responses import StreamingResponse
-from s3_utils import create_presigned_url
+from libs.s3 import create_presigned_url
 from schemas import UploadTransactionSkipRequestModel, UploadTransactionDetailsRequestModel, UploadTransactionToDbRequestModel, UploadTransactionStatusDetailsRequestModel
 from crud.transactions import *
 from crud.store import fetch_searched_store
