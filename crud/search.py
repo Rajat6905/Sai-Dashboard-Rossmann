@@ -74,6 +74,9 @@ def search_by_transaction(db, db1 , transaction_id):
             parsed_date = parsed_date.date()
 
             previous_video_url= f"Videos/{parsed_date}/{previous_transaction_id.store_actual_id}/unzip/{previous_transaction_id.totalNumberOfItems}/{previous_transaction_id.transactionId}.mp4"
+
+            if source_id ==1:
+                previous_video_url= f"Videos/{parsed_date}/{previous_transaction_id.store_actual_id}/unzip/mainbank/{previous_transaction_id.totalNumberOfItems}/{previous_transaction_id.transactionId}.mp4"
         else:
             previous_video_url= None
 
@@ -98,6 +101,9 @@ def search_by_transaction(db, db1 , transaction_id):
             parsed_date = parsed_date.date()
 
             next_video_url= f"Videos/{parsed_date}/{next_transaction_id.store_actual_id}/unzip/{next_transaction_id.totalNumberOfItems}/{next_transaction_id.transactionId}.mp4"
+            
+            if source_id ==1:
+                next_video_url= f"Videos/{parsed_date}/{next_transaction_id.store_actual_id}/unzip/mainbank/{next_transaction_id.totalNumberOfItems}/{next_transaction_id.transactionId}.mp4"
         else:
             next_video_url= None
 

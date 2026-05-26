@@ -126,7 +126,10 @@ def upload_transaction(db2: Session, db:Session, transaction_id, counter_type):
     if is_exists:
         # print("exists")
         beginDate = is_exists.begin_date
-        count = is_exists.total_number_of_items
+        if counter_type == 1:
+            count = f"mainbank/{is_exists.total_number_of_items}"
+        else:
+            count = is_exists.total_number_of_items
         video_name = transaction_id + ".mp4"
 
         store_actual_id = db.query(Stores.store_actual_id).filter(Stores.id == is_exists.store_id).first()
@@ -152,7 +155,7 @@ def upload_transaction(db2: Session, db:Session, transaction_id, counter_type):
         main = db2.query(Transaction_Main).filter(Transaction_Main.transactionId == transaction_id).first()
         if main:
             beginDate = main.beginDate
-            count = main.totalNumberOfItems
+            count = f"mainbank/{main.totalNumberOfItems}"
             video_name = transaction_id + ".mp4"
             store_actual_id = db2.query(Stores.store_actual_id).filter(Stores.id == main.storeId).first()
             move_data_in_s3(beginDate, store_actual_id[0], count, video_name)
